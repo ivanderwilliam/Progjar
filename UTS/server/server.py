@@ -35,16 +35,17 @@ class Clients(Thread):
 		)
 		self.connection.sendall(json.dumps(response))
 
-	def _get_handler(self, request):
+	def downloadfunc(self, request):
 		fd = open(request['path'], 'rb')
 		response = {}
 		response['file_size'] = os.path.getsize(request['path'])
 		self.connection.sendall(json.dumps(response))
 		for data in fd:
 			self.connection.sendall(data)
+		print "Berhasil"
 		fd.close()
 
-	def _put_handler(self, request):
+	def uploadfunc(self, request):
 		max_size = request['file_size']
 		received = 0
 		fd = open(request['path'], 'wb+', 0)
@@ -54,8 +55,8 @@ class Clients(Thread):
 			received += len(data)
 			fd.write(data)
 
-		fd.close()
 		print('Berhasil')
+		fd.close()
 
 	def run(self):
 		while True:
@@ -65,10 +66,10 @@ class Clients(Thread):
 
 			if cmd == 'dir':
 				self.dirfunc(request)
-			elif cmd == 'get':
-				self._get_handler(request)
-			elif cmd == 'put':
-				self._put_handler(request)
+			elif cmd == 'download':
+				self.downloadfunc(request)
+			elif cmd == 'upload':
+				self.uploadfunc(request)
 
 
 if __name__=="__main__":
