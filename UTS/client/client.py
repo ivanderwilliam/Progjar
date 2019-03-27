@@ -6,7 +6,7 @@ from threading import Thread
 import glob
 import json
 
-class RelativePath:
+class Paths:
     def __init__(self):
         self.current_dir = ''
 
@@ -40,7 +40,7 @@ class Client(Thread):
         server_addr = ('127.0.0.1', 6473)
         self.sock.connect(server_addr)
         print('connected '+str(server_addr))
-        self.r_path = RelativePath()
+        self.r_path = Paths()
         Thread.__init__(self)
 
     def dirfunc(self):
@@ -53,7 +53,7 @@ class Client(Thread):
         data = json.loads(response)
 
         dir_list = data['dir_list']
-        print(self.r_path.get_dir()+' > ')
+        print(self.r_path.get_dir())
         for dir in dir_list:
             dir_type = ''
             if dir['is_file']:
@@ -61,11 +61,11 @@ class Client(Thread):
             else :
                 dir_type = 'folder'
 
-            print('-> '+dir['name'] + '     [{}]'.format(dir_type))
+            print('-'+dir['name'] + '     [{}]'.format(dir_type))
 
-    def _get_handler(self, file_name):
+    def downloadfunc(self, file_name):
         request = {}
-        request['command'] = 'get'
+        request['command'] = 'download'
         request['path'] = self.r_path.get_dir() + file_name
         self.sock.sendall(json.dumps(request))
         fd = open(file_name, 'wb+', 0)
@@ -81,11 +81,11 @@ class Client(Thread):
         fd.close()
         print('Berhasil')
 
-    def _put_handler(self, file_name):
+    def uploadfunc(self, file_name):
         path = self.r_path.get_dir()+file_name
         fd = open(file_name, 'rb')
         request = {}
-        request['command'] = 'put'
+        request['command'] = 'upload'
         request['path'] = path
         request['file_size'] = os.path.getsize(file_name)
         self.sock.sendall(json.dumps(request))
@@ -94,8 +94,7 @@ class Client(Thread):
             for data in fd:
                 self.sock.sendall(data)
 
-        self.sock.send(bytes('--END--'))
-        print('file sent')
+        print('Berhasil')
 
     def run(self):
         while True:
@@ -107,10 +106,10 @@ class Client(Thread):
                 cd_path = commands[1]
                 self.r_path.cd(cd_path)
                 print(self.r_path.get_dir())
-            elif command == 'get':
-                self._get_handler(commands[1])
-            elif command == 'put':
-                self._put_handler(commands[1])
+            elif command == 'download':
+                self.downloadfunc(commands[1])
+            elif command == 'upload':
+                self.uploadfunc(commands[1])
 
 
 
